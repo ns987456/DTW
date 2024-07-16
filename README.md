@@ -1,2 +1,2 @@
 # DTW
-Dynamic Time Warping
+Dynamic Time Warping 
