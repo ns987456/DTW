@@ -1,0 +1,133 @@
+# tgz <- download.packages("party", destdir = tmpdir)[2]
+#
+## system("doxygen inst/doxygen.cfg")
+##### have fun
+## browseURL(file.path(tmpdir, "party", "inst", 
+####  "documentation", "html", "index.html")) 
+
+# compute DTW distances
+ library(proxy)
+ library(dtw)
+
+
+library(XLConnect)
+library(cluster) 
+library(fpc)
+library(pvclust)
+
+
+sc<-read.table("C:/Users/N/Desktop/mablagh.txt",header = TRUE)
+
+
+plot(ts(sc[,1:6]),plot.type="single", col=1:6, main="time series")
+dim(sc)
+plot(ts(sc[,1:6]))
+
+# randomly sampled n cases from each class, to make it easy for plotting
+
+dimdata=dim(sc)
+ sample2 <- t(sc[,1:dimdata[2]])
+ dim(sample2)
+
+# compute DTW distances
+ 
+ distMatrix <- dist(sample2, method="DTW")
+
+# hierarchical clustering
+
+hc <- hclust(distMatrix, method="average")
+## hc <- hclust(distMatrix, method="ward") 
+## hc <- hclust(distMatrix, method="centroid") 
+## hc <- hclust(distMatrix, method="mcquitty") 
+
+groups <- cutree(hc, k=4) # cut tree into 5 clusters
+mydata2 = t(data.frame(sample2[,1], groups))
+
+summary(hc)
+
+plot(hc, main="????? ???? ??ǘ??--????")
+
+clusplot(sample2, groups, color=TRUE, shade=TRUE, 
+   labels=2, lines=0)
+plotcluster(sample2, groups) 
+ 
+plot(sample2, col = groups)
+plot(hc )
+plot(hc ,col = hc$cluster) # display dendogram
+# draw dendogram with red borders around the 5 clusters 
+# rect.hclust(hc , k=5, border="red") 
+## cluster centers "fitted" to each obs.:
+fitted.x <- fitted(hc);  head(fitted.x)
+resid.x <- x - fitted(hc)
+
+writeWorksheetToFile(file = "C:/Users/N/Desktop/clusterk.xlsx", data = mydata2, sheet = "Sheet1")
+
+
+
+
+
+############################################
+############################################
+############################################
+
+ sc <- read.table("http://kdd.ics.uci.edu/databases/synthetic_control/synthetic_control.data", header=F, sep="")
+# randomly sampled n cases from each class, to make it easy for plotting
+ n <- 10
+ s <- sample(1:100, n)
+ idx <- c(s, 100+s, 200+s, 300+s, 400+s, 500+s)
+ sample2 <- sc[idx,]
+ observedLabels <- c(rep(1,n), rep(2,n), rep(3,n), rep(4,n), rep(5,n), rep(6,n))
+# compute DTW distances
+ library(dtw)
+ distMatrix <- dist(sample2, method="DTW")
+
+# hierarchical clustering
+ hc <- hclust(distMatrix, method="average")
+ plot(hc, labels=observedLabels, main="")
+
+######  step2 ######
+
+# extracting DWT coefficients (with Haar filter)
+ library(wavelets)
+ wtData <- NULL
+ for (i in 1:nrow(sc)) {
+  a <- t(sc[i,])
+  wt <- dwt(a, filter="haar", boundary="periodic")
+  wtData <- rbind(wtData, unlist(c(wt@W,wt@V[[wt@level]])))
+ }
+ wtData <- as.data.frame(wtData)
+# set class labels into categorical values
+ classId <- c(rep("1",100), rep("2",100), rep("3",100),
+  rep("4",100), rep("5",100), rep("6",100))
+ wtSc <- data.frame(cbind(classId, wtData))
+
+# build a decision tree with ctree() in package party
+ library(party)
+ ct <- ctree(classId ~ ., data=wtSc,
+  controls = ctree_control(minsplit=30, minbucket=10, maxdepth=5))
+ pClassId <- predict(ct)
+
+# check predicted classes against original class labels
+ table(classId, pClassId)
+
+# accuracy
+ (sum(classId==pClassId)) / nrow(wtSc)
+ plot(ct, ip_args=list(pval=FALSE), ep_args=list(digits=0))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
